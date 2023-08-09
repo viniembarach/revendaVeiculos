@@ -15,7 +15,7 @@
 
         <div class="form-group">
             {!! Form::label('classe', 'Tipo:') !!}
-            {!! Form::text('classe', $tipo_veiculo->classe, ['class' => 'form-control', 'required']) !!}
+            {!! Form::text('classe', $tipo_veiculo->classe, ['class' => 'form-control', 'required', 'maxlength' => '50', 'oninput' => "this.value = this.value.replace(/[^a-zA-ZçÇãâáàéêíóôõúü\s]/g, '')"]) !!}
         </div>
 
         <div class="form-group">

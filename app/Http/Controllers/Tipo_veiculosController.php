@@ -10,8 +10,16 @@ use Illuminate\Http\Request;
 
 class Tipo_veiculosController extends Controller
 {
-    public function index(){
-        $tipo_veiculos = Tipo_veiculo::orderBy('classe')->paginate(5);
+    public function index(Request $filtro){
+        $filtragem = $filtro->get('desc_filtro');
+        if ($filtragem == null)
+            $tipo_veiculos = Tipo_veiculo::orderBy('classe')->paginate(10);
+        else
+            $tipo_veiculos = Tipo_veiculo::where('classe', 'like', '%'.$filtragem.'%')
+                            ->orderBy("classe")
+                            ->paginate(10)
+                            ->setpath('tipo_veiculos?desc_filtro='.$filtragem);
+
         return view('tipo_veiculos.index', ['tipo_veiculos'=>$tipo_veiculos]);
     }
 
@@ -26,13 +34,21 @@ class Tipo_veiculosController extends Controller
         return redirect()->route('tipo_veiculos');
     }
 
-    public function destroy($id){
-        Tipo_veiculo::find($id)-> delete();
-        return redirect()->route('tipo_veiculos');
+    public function destroy(Request $request){
+        try{
+            Tipo_veiculo::find(\Crypt::decrypt($request->get('id')))->delete();
+            $ret = array('status'=>200, 'msg'=>"null");
+        } catch (\Illuminate\Database\QueryException $e) {
+            $ret = array('status'=>500, 'msg'=>$e->getMessage());
+        }
+        catch (\PDOException $e){
+            $ret = array('status'=>500, 'msg'=>$e->getMessage());
+        }
+        return $ret;
     }
 
-    public function edit($id){
-        $tipo_veiculo = Tipo_veiculo::find($id);
+    public function edit(Request $request) {
+        $tipo_veiculo = Tipo_veiculo::find(\Crypt::decrypt($request->get('id')));
         return view('tipo_veiculos.edit', compact('tipo_veiculo'));
     }
 

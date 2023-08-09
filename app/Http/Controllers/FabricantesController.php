@@ -10,8 +10,16 @@ use Illuminate\Support\Facades\Redirect;
 
 class FabricantesController extends Controller
 {
-    public function index(){
-        $fabricantes = Fabricante::orderBy('nome')->paginate(5);
+    public function index(Request $filtro){
+        $filtragem = $filtro->get('desc_filtro');
+        if ($filtragem == null)
+            $fabricantes = Fabricante::orderBy('nome')->paginate(10);
+        else
+            $fabricantes = Fabricante::where('nome', 'like', '%'.$filtragem.'%')
+                            ->orderBy("nome")
+                            ->paginate(10)
+                            ->setpath('fabricantes?desc_filtro='.$filtragem);
+
         return view('fabricantes.index', ['fabricantes'=>$fabricantes]);
     }
 
@@ -26,13 +34,21 @@ class FabricantesController extends Controller
         return redirect()->route('fabricantes');
     }
 
-    public function destroy($id){
-        Fabricante::find($id)-> delete();
-        return redirect()->route('fabricantes');
+    public function destroy(Request $request){
+        try{
+            Fabricante::find(\Crypt::decrypt($request->get('id')))->delete();
+            $ret = array('status'=>200, 'msg'=>"null");
+        } catch (\Illuminate\Database\QueryException $e) {
+            $ret = array('status'=>500, 'msg'=>$e->getMessage());
+        }
+        catch (\PDOException $e){
+            $ret = array('status'=>500, 'msg'=>$e->getMessage());
+        }
+        return $ret;
     }
 
-    public function edit($id){
-        $fabricante = Fabricante::find($id);
+    public function edit(Request $request) {
+        $fabricante = Fabricante::find(\Crypt::decrypt($request->get('id')));
         return view('fabricantes.edit', compact('fabricante'));
     }
 

@@ -9,8 +9,16 @@ use Psy\CodeCleaner\FunctionReturnInWriteContextPass;
 
 class PessoasController extends Controller
 {
-    public function index(){
-        $pessoas = Pessoa::orderBy('nome')->paginate(5);
+    public function index(Request $filtro){
+        $filtragem = $filtro->get('desc_filtro');
+        if ($filtragem == null)
+            $pessoas = Pessoa::orderBy('nome')->paginate(10);
+        else
+            $pessoas = Pessoa::where('nome', 'like', '%'.$filtragem.'%')
+                            ->orderBy("nome")
+                            ->paginate(10)
+                            ->setpath('pessoas?desc_filtro='.$filtragem);
+
         return view('pessoas.index', ['pessoas'=>$pessoas]);
     }
 
@@ -25,17 +33,24 @@ class PessoasController extends Controller
         return redirect()->route('pessoas');
     }
 
-    public function destroy($id){
-        Pessoa::find($id)-> delete();
-        return redirect()->route('pessoas');
+    public function destroy(Request $request) {
+        try {
+            Pessoa::find(\Crypt::decrypt($request->get('id')))->delete();
+            $ret = array('status'=>200, 'msg'=>"null");
+        } catch (\Illuminate\Database\QueryException $e) {
+            $ret = array('status'=>500, 'msg'=>$e->getMessage());
+        } catch (\PDOException $e) {
+            $ret = array('status'=>500, 'msg'=>$e->getMessage());
+        }
+        return $ret;
     }
 
-    public function edit($id){
-        $pessoa = Pessoa::find($id);
+    public function edit(Request $request) {
+        $pessoa = Pessoa::find(\Crypt::decrypt($request->get('id')));
         return view('pessoas.edit', compact('pessoa'));
     }
 
-    public function update(PessoaRequest $request, $id){
+    public function update(PessoaRequest $request, $id) {
         Pessoa::find($id)->update($request->all());
         return redirect()->route('pessoas');
     }

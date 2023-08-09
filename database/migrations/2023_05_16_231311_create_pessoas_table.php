@@ -19,6 +19,8 @@ class CreatePessoasTable extends Migration
             $table->String('nome', 100);
             $table->String('telefone', 11);
             $table->String('endereco', 500);
+            $table->bigInteger('cidade_id')->unsigned()->nullable();
+            $table->foreign('cidade_id')->references('id')->on('cidades');
             $table->String('tipo', 8);
             $table->timestamps();
         });
